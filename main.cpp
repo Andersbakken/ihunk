@@ -1,6 +1,6 @@
 #include <QtCore>
 
-struct Line {
+struct Line {   
     enum Type {
         Other, // git stuff etc
         MinusMinusMinus,
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
             qWarning("Unexpected empty line %d", lineNumber);
             continue;
         }
-        
+
         if (state == GatheringHunk && !isHunkContent(line)) {
             processHunk(lines, removedRx, addedRx, mode == All);
             lines.clear();
