@@ -1,6 +1,6 @@
 #include <QtCore>
 
-struct Line {   
+struct Line {
     enum Type {
         Other, // git stuff etc
         MinusMinusMinus,
@@ -47,13 +47,15 @@ static inline void processHunk(const QList<Line> &lines,
 
 static inline bool isHunkContent(const QString &line)
 {
-    switch (line.at(0).toLatin1()) {
-    case '-':
-    case '+':
-    case ' ':
-        return true;
-    default:
-        break;
+    if (!line.isEmpty()) {
+        switch (line.at(0).toLatin1()) {
+        case '-':
+        case '+':
+        case ' ':
+            return true;
+        default:
+            break;
+        }
     }
     return false;
 }
@@ -114,11 +116,6 @@ int main(int argc, char **argv)
     while (!ts.atEnd()) {
         ++lineNumber;
         const QString line = ts.readLine();
-        if (line.isEmpty()) {
-            qWarning("Unexpected empty line %d", lineNumber);
-            continue;
-        }
-
         if (state == GatheringHunk && !isHunkContent(line)) {
             processHunk(lines, removedRx, addedRx, mode == All);
             lines.clear();
@@ -158,24 +155,29 @@ int main(int argc, char **argv)
             }
             break;
         case GatheringHunk:
-            Line::Type type = Line::Other;
-            switch (line.at(0).toLatin1()) {
-            case '+':
-                type = Line::Added;
-                break;
-            case '-':
-                type = Line::Removed;
-                break;
-            case ' ':
-                type = Line::Context;
-                break;
-            default:
-                qWarning("Unexpected content here in GatheringHunk [%s]", qPrintable(line));
-                break;
-            }
-            if (type != Line::Other) {
-                const Line l = { type, line };
+            if (line.isEmpty()) {
+                const Line l = { Line::Context, QString() };
                 lines.append(l);
+            } else {
+                Line::Type type = Line::Other;
+                switch (line.at(0).toLatin1()) {
+                case '+':
+                    type = Line::Added;
+                    break;
+                case '-':
+                    type = Line::Removed;
+                    break;
+                case ' ':
+                    type = Line::Context;
+                    break;
+                default:
+                    qWarning("Unexpected content here in GatheringHunk [%s]", qPrintable(line));
+                    break;
+                }
+                if (type != Line::Other) {
+                    const Line l = { type, line };
+                    lines.append(l);
+                }
             }
             break;
         }
